@@ -9,18 +9,18 @@ pub enum Queue {
 }
 
 impl Queue {
-    pub async fn new(driver: &str, queue_uri: &str) -> Result<Queue, &'static str> {
+    pub async fn new(driver: &str) -> Result<Queue, &'static str> {
         match driver {
-            "awssqs" => Ok(Queue::AWSSQS(AWSSQSQueue::new(queue_uri).await.unwrap())),
-            "nats" => Ok(Queue::NATS(NatsQueue::new(queue_uri).await.unwrap())),
+            "awssqs" => Ok(Queue::AWSSQS(AWSSQSQueue::new().await.unwrap())),
+            "nats" => Ok(Queue::NATS(NatsQueue::new().await.unwrap())),
             _ => Err("Queue type not supported"),
         }
     }
 
-    pub async fn publish(&self, topic: &str, message: String) -> Result<(), &str> {
+    pub async fn publish(&self, message: String) -> Result<(), &str> {
         match self {
-            Queue::AWSSQS(q) => q.publish(topic, message).await,
-            Queue::NATS(q) => q.publish(topic, message).await,
+            Queue::AWSSQS(q) => q.publish(message).await,
+            Queue::NATS(q) => q.publish(message).await,
         }
     }
 }

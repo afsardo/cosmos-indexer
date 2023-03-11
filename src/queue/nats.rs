@@ -1,20 +1,34 @@
 use bytes::Bytes;
 
 pub struct NatsQueue {
+    config: NatsConfig,
     client: async_nats::Client,
 }
 
+struct NatsConfig {
+    topic: String,
+}
+
 impl NatsQueue {
-    pub async fn new(queue_uri: &str) -> Result<NatsQueue, &str> {
+    pub async fn new() -> Result<NatsQueue, &'static str> {
+        dotenv::dotenv().ok();
+
+        let nats_uri = dotenv::var("NATS_URI").unwrap();
+
+        let config = NatsConfig {
+            topic: dotenv::var("NATS_TOPIC").unwrap(),
+        };
+
         Ok(NatsQueue {
-            client: async_nats::connect(queue_uri).await.unwrap(),
+            config,
+            client: async_nats::connect(nats_uri).await.unwrap(),
         })
     }
 
-    pub async fn publish(&self, topic: &str, message: String) -> Result<(), &str> {
+    pub async fn publish(&self, message: String) -> Result<(), &str> {
         let result = self
             .client
-            .publish(topic.to_string(), Bytes::from(message))
+            .publish(self.config.topic.to_owned(), Bytes::from(message))
             .await;
 
         if result.is_err() {

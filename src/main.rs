@@ -27,8 +27,6 @@ pub struct IndexerConfig {
     pub mongodb_uri: String,
     pub mongodb_database: String,
     pub queue_driver: String,
-    pub queue_uri: String,
-    pub queue_topic: String,
     pub start_height: i32,
     pub max_block_lag: i32,
 }
@@ -46,8 +44,6 @@ async fn main() {
         mongodb_uri: dotenv::var("MONGODB_URI").unwrap(),
         mongodb_database: dotenv::var("MONGODB_DATABASE").unwrap(),
         queue_driver: dotenv::var("QUEUE_DRIVER").unwrap(),
-        queue_uri: dotenv::var("QUEUE_URI").unwrap(),
-        queue_topic: dotenv::var("QUEUE_TOPIC").unwrap(),
         start_height: dotenv::var("START_HEIGHT").unwrap().parse::<i32>().unwrap(),
         max_block_lag: dotenv::var("MAX_BLOCK_LAG")
             .unwrap()
@@ -57,9 +53,7 @@ async fn main() {
     println!("Config: {:?}", &config);
 
     debug!("Connecting to queue");
-    let queue = queue::Queue::new(&config.queue_driver, &config.queue_uri)
-        .await
-        .unwrap();
+    let queue = queue::Queue::new(&config.queue_driver).await.unwrap();
     info!("Connected to queue");
 
     debug!("Connecting to database");
@@ -169,10 +163,7 @@ async fn process_tx(context: &IndexerContext, tx: hive::txs::TxInfo) {
                 "event": event,
             });
 
-            let result = context
-                .queue
-                .publish(&context.config.queue_topic, packet.to_string())
-                .await;
+            let result = context.queue.publish(packet.to_string()).await;
 
             if result.err().is_some() {
                 error!("Failed to publish tx event: {:?}", result.err());
