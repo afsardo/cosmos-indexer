@@ -40,7 +40,7 @@ pub struct TxBody {
 #[derive(Deserialize, Debug, Clone)]
 pub struct TxMsg {
     #[serde(rename = "@type")]
-    pub type_: Option<String>,
+    pub type_str: Option<String>,
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -51,7 +51,7 @@ pub struct Log {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Event {
     #[serde(rename = "type")]
-    pub type_: Option<String>,
+    pub type_str: Option<String>,
     pub attributes: Option<Vec<Attribute>>,
 }
 
@@ -110,7 +110,7 @@ pub async fn txs_by_height(context: &IndexerContext, heights: &Vec<i32>) -> Vec<
     }
 
     let response = client
-        .post(&context.config.hive_endpoint)
+        .post(&context.indexer_config.hive_endpoint)
         .json(&queries)
         .send()
         .await

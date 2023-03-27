@@ -1,0 +1,11 @@
+events:
+  example:
+    name: "Example event"
+    table: example_events
+    pattern:
+      - key: _contract_address
+        value: "address"
+      - key: action
+        value: "example"
+      - key: sender
+        value: "address"

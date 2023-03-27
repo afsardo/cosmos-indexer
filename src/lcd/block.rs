@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use serde::{de, Deserialize};
 
 use crate::IndexerContext;
@@ -37,13 +39,13 @@ where
 }
 
 pub async fn fetch_latest_block(
-    context: &IndexerContext,
+    context: Arc<IndexerContext>,
 ) -> Result<LatestBlockResponse, Box<dyn std::error::Error>> {
     let client = reqwest::Client::new();
     let response = client
         .get(format!(
             "{}/cosmos/base/tendermint/v1beta1/blocks/latest",
-            context.config.lcd_endpoint
+            context.indexer_config.lcd_endpoint
         ))
         .send()
         .await?
@@ -54,7 +56,7 @@ pub async fn fetch_latest_block(
 }
 
 pub async fn fetch_latest_block_height(
-    context: &IndexerContext,
+    context: Arc<IndexerContext>,
 ) -> Result<i32, Box<dyn std::error::Error>> {
     let block = fetch_latest_block(context).await?;
 
