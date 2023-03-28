@@ -1,7 +1,8 @@
-use crate::IndexerContext;
 use mongodb::bson::doc;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
+
+use crate::IndexerContext;
 
 static STATUS_COLLECTION: &str = "status";
 

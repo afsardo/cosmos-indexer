@@ -1,43 +1,32 @@
 use dotenv;
 use env_logger;
-use event_matcher::matcher_config::MatcherConfig;
 use log::{debug, info, warn};
 use mongodb::Database;
 use serde::Deserialize;
 use serde::Serialize;
-// use queue::Queue;
-// use serde_json::json;
 use std::sync::Arc;
 use tokio::time::sleep;
 use tokio::time::Duration;
 
-// pub mod queue;
 pub mod database;
 pub mod event_matcher;
 pub mod helpers;
 pub mod rpc;
-// pub mod hive;
-// pub mod lcd;
 
 pub struct IndexerContext {
     pub indexer_config: IndexerConfig,
-    pub matcher_config: MatcherConfig,
+    pub matcher_config: event_matcher::matcher_config::MatcherConfig,
     pub mongodb: Database,
-    // pub queue: Queue,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct IndexerConfig {
     pub chain_id: String,
-    // pub lcd_endpoint: String,
     pub rpc_endpoint: String,
-    // pub hive_endpoint: String,
     pub mongodb_uri: String,
     pub mongodb_database: String,
-    // pub queue_driver: String,
     pub start_height: u64,
-    pub max_block_lag: u64,
-    pub block_batch_size: u64,
+    pub block_lag_batch_size: u64,
     pub fetch_batch_timeout: u64,
     pub fetch_single_timeout: u64,
 }
@@ -51,18 +40,11 @@ async fn main() {
     debug!("Parsing indexer config");
     let indexer_config = IndexerConfig {
         chain_id: dotenv::var("CHAIN_ID").unwrap(),
-        // lcd_endpoint: dotenv::var("LCD_ENDPOINT").unwrap(),
         rpc_endpoint: dotenv::var("RPC_ENDPOINT").unwrap(),
-        // hive_endpoint: dotenv::var("HIVE_ENDPOINT").unwrap(),
         mongodb_uri: dotenv::var("MONGODB_URI").unwrap(),
         mongodb_database: dotenv::var("MONGODB_DATABASE").unwrap(),
-        // queue_driver: dotenv::var("QUEUE_DRIVER").unwrap(),
         start_height: dotenv::var("START_HEIGHT").unwrap().parse::<u64>().unwrap(),
-        max_block_lag: dotenv::var("MAX_BLOCK_LAG")
-            .unwrap()
-            .parse::<u64>()
-            .unwrap(),
-        block_batch_size: dotenv::var("BLOCK_BATCH_SIZE")
+        block_lag_batch_size: dotenv::var("BLOCK_LAG_BATCH_SIZE")
             .unwrap()
             .parse::<u64>()
             .unwrap(),
@@ -81,10 +63,6 @@ async fn main() {
     let matcher_config = event_matcher::matcher_config::load_matcher_config();
     info!("Matcher config: {:?}", &matcher_config);
 
-    // debug!("Connecting to queue");
-    // let queue = queue::Queue::new(&config.queue_driver).await.unwrap();
-    // info!("Connected to queue");
-
     debug!("Connecting to database");
     let mongodb = database::connect(
         &indexer_config.mongodb_uri,
@@ -98,7 +76,6 @@ async fn main() {
         indexer_config,
         mongodb,
         matcher_config,
-        // queue,
     });
     let context_ref = context.as_ref();
 
@@ -122,13 +99,13 @@ async fn main() {
         let mut to_block_height = from_block_height;
 
         if last_current_height > last_indexed_height {
-            let current_block_lag = last_current_height - last_indexed_height;
-            if current_block_lag > context_ref.indexer_config.max_block_lag {
-                to_block_height = last_indexed_height + context.indexer_config.block_batch_size;
+            let block_lag = last_current_height - last_indexed_height;
+            if block_lag > 1 {
+                to_block_height = last_indexed_height + context.indexer_config.block_lag_batch_size;
                 if to_block_height > last_current_height {
                     to_block_height = last_current_height;
                 }
-                warn!("Currently behind maximum lag, fetching in batch mode: last_current_height: {}, last_indexed_height: {}, current_block_lag: {}, max_block_lag: {}", last_current_height, last_indexed_height, current_block_lag, context.indexer_config.max_block_lag);
+                warn!("Currently behind, fetching in batch mode: last_current_height: {}, last_indexed_height: {}, block_lag: {}", last_current_height, last_indexed_height, block_lag);
             } else {
                 info!("All caught up, keep stream indexing as normal: last_current_height: {}, last_indexed_height: {}", last_current_height, last_indexed_height);
             }
