@@ -11,7 +11,7 @@ pub struct StatusDocument {
     #[serde(rename = "chainId")]
     chain_id: String,
     #[serde(rename = "indexedHeight")]
-    indexed_height: i32,
+    indexed_height: u64,
     #[serde(rename = "updatedAt")]
     updated_at: mongodb::bson::DateTime,
 }
@@ -51,7 +51,7 @@ pub async fn fetch_indexer_status(
     }
 }
 
-pub async fn fetch_indexed_height(context: Arc<IndexerContext>) -> mongodb::error::Result<i32> {
+pub async fn fetch_indexed_height(context: Arc<IndexerContext>) -> mongodb::error::Result<u64> {
     let status = fetch_indexer_status(context).await?;
 
     Ok(status.indexed_height)
@@ -59,7 +59,7 @@ pub async fn fetch_indexed_height(context: Arc<IndexerContext>) -> mongodb::erro
 
 pub async fn update_indexed_height(
     context: Arc<IndexerContext>,
-    indexed_height: i32,
+    indexed_height: u64,
 ) -> mongodb::error::Result<()> {
     context
         .mongodb
@@ -70,7 +70,7 @@ pub async fn update_indexed_height(
             },
             doc! {
                 "$set": {
-                    "indexedHeight": indexed_height,
+                    "indexedHeight": indexed_height as i64,
                     "updatedAt": mongodb::bson::DateTime::from(std::time::SystemTime::now()),
                 }
             },

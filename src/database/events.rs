@@ -11,7 +11,7 @@ pub struct EventsDocument {
     #[serde(rename = "chainId")]
     chain_id: String,
     #[serde(rename = "blockHeight")]
-    block_height: i32,
+    block_height: u64,
     #[serde(rename = "txHash")]
     tx_hash: String,
     key: String,
@@ -30,7 +30,7 @@ pub struct EventLog {
 
 pub async fn save_event(
     context: Arc<IndexerContext>,
-    block_height: i32,
+    block_height: u64,
     tx_hash: String,
     event_key: String,
     event_logs: Vec<(String, String)>,
