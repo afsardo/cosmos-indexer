@@ -1,7 +1,6 @@
 use dotenv;
 use env_logger;
 use log::{debug, info, warn};
-use mongodb::Database;
 use serde::Deserialize;
 use serde::Serialize;
 use std::sync::Arc;
@@ -11,12 +10,14 @@ use tokio::time::Duration;
 pub mod database;
 pub mod event_matcher;
 pub mod helpers;
+pub mod notifications;
 pub mod rpc;
 
 pub struct IndexerContext {
     pub indexer_config: IndexerConfig,
     pub matcher_config: event_matcher::matcher_config::MatcherConfig,
-    pub mongodb: Database,
+    pub mongodb: mongodb::Database,
+    pub sns: Option<aws_sdk_sns::Client>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -29,6 +30,10 @@ pub struct IndexerConfig {
     pub block_lag_batch_size: u64,
     pub fetch_batch_timeout: u64,
     pub fetch_single_timeout: u64,
+    pub notifications_enabled: bool,
+    pub notifications_topic: String,
+    pub aws_localstack: bool,
+    pub aws_localstack_endpoint: String,
 }
 
 #[tokio::main]
@@ -56,6 +61,13 @@ async fn main() {
             .unwrap()
             .parse::<u64>()
             .unwrap(),
+        notifications_enabled: dotenv::var("NOTIFICATIONS_ENABLED")
+            .unwrap()
+            .parse()
+            .unwrap(),
+        notifications_topic: dotenv::var("NOTIFICATIONS_TOPIC").unwrap(),
+        aws_localstack: dotenv::var("AWS_LOCALSTACK").unwrap().parse().unwrap(),
+        aws_localstack_endpoint: dotenv::var("AWS_LOCALSTACK_ENDPOINT").unwrap(),
     };
     info!("Indexer config: {:?}", &indexer_config);
 
@@ -72,9 +84,25 @@ async fn main() {
     .unwrap();
     info!("Connected to database");
 
+    let sns = if indexer_config.notifications_enabled {
+        debug!("Connecting to aws sns");
+        let aws_shared_config = aws_config::load_from_env().await;
+        let mut aws_config_builder = aws_sdk_sns::config::Builder::from(&aws_shared_config);
+        if indexer_config.aws_localstack {
+            aws_config_builder =
+                aws_config_builder.endpoint_url(indexer_config.aws_localstack_endpoint.to_owned());
+        }
+        let client = Some(aws_sdk_sns::Client::from_conf(aws_config_builder.build()));
+        info!("Connected to aws sns");
+        client
+    } else {
+        None
+    };
+
     let context = Arc::new(IndexerContext {
         indexer_config,
         mongodb,
+        sns,
         matcher_config,
     });
     let context_ref = context.as_ref();
@@ -126,6 +154,12 @@ async fn main() {
             database::stream_status::update_indexed_height(context.clone(), last_indexed_height)
                 .await
                 .unwrap();
+
+            if context.indexer_config.notifications_enabled {
+                notifications::notify_last_indexed_height(context.clone(), last_indexed_height)
+                    .await
+                    .unwrap();
+            }
         }
 
         if to_block_height - from_block_height > 1 {
