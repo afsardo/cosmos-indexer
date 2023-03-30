@@ -28,7 +28,7 @@ pub async fn notify_last_indexed_height(
         .as_ref()
         .unwrap()
         .publish()
-        .topic_arn(context.indexer_config.notifications_topic.to_owned())
+        .topic_arn(context.indexer_config.aws_sns_topic.to_owned())
         .message(serde_json::to_string(&message)?)
         .send()
         .await?;

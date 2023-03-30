@@ -21,7 +21,7 @@ pub async fn fetch_indexer_status(
     context: Arc<IndexerContext>,
 ) -> mongodb::error::Result<StatusDocument> {
     let result = context
-        .mongodb
+        .database
         .collection::<StatusDocument>(STATUS_COLLECTION)
         .find_one(
             doc! {
@@ -42,7 +42,7 @@ pub async fn fetch_indexer_status(
             };
 
             context
-                .mongodb
+                .database
                 .collection::<StatusDocument>(STATUS_COLLECTION)
                 .insert_one(&status, None)
                 .await?;
@@ -63,7 +63,7 @@ pub async fn update_indexed_height(
     indexed_height: u64,
 ) -> mongodb::error::Result<()> {
     context
-        .mongodb
+        .database
         .collection::<StatusDocument>(STATUS_COLLECTION)
         .update_one(
             doc! {

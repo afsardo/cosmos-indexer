@@ -38,7 +38,7 @@ pub async fn save_event(
     event_full_logs: Vec<(String, String)>,
 ) -> mongodb::error::Result<()> {
     context
-        .mongodb
+        .database
         .collection::<EventsDocument>(EVENTS_COLLECTION)
         .insert_one(
             EventsDocument {
