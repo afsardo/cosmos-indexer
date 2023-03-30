@@ -1,8 +1,7 @@
 events:
-  example:
-    name: "Example event"
-    table: example_events
-    pattern:
+  - name: "Example event"
+    key: "example_event"
+    patterns:
       - key: _contract_address
         value: "address"
       - key: action

@@ -19,8 +19,8 @@ pub struct Pattern {
     pub value: String,
 }
 
-pub fn load_matcher_config() -> MatcherConfig {
-    let config_file = File::open("config.yaml").unwrap();
+pub fn load_matcher_config_from_file(file: &str) -> MatcherConfig {
+    let config_file = File::open(file).unwrap();
     let matcher_config = serde_yaml::from_reader::<File, MatcherConfig>(config_file).unwrap();
     matcher_config
 }

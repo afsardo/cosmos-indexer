@@ -1,7 +1,8 @@
-use crate::IndexerContext;
 use mongodb::bson::doc;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
+
+use crate::IndexerContext;
 
 static STATUS_COLLECTION: &str = "status";
 
@@ -11,7 +12,7 @@ pub struct StatusDocument {
     #[serde(rename = "chainId")]
     chain_id: String,
     #[serde(rename = "indexedHeight")]
-    indexed_height: i32,
+    indexed_height: u64,
     #[serde(rename = "updatedAt")]
     updated_at: mongodb::bson::DateTime,
 }
@@ -20,7 +21,7 @@ pub async fn fetch_indexer_status(
     context: Arc<IndexerContext>,
 ) -> mongodb::error::Result<StatusDocument> {
     let result = context
-        .mongodb
+        .database
         .collection::<StatusDocument>(STATUS_COLLECTION)
         .find_one(
             doc! {
@@ -41,7 +42,7 @@ pub async fn fetch_indexer_status(
             };
 
             context
-                .mongodb
+                .database
                 .collection::<StatusDocument>(STATUS_COLLECTION)
                 .insert_one(&status, None)
                 .await?;
@@ -51,7 +52,7 @@ pub async fn fetch_indexer_status(
     }
 }
 
-pub async fn fetch_indexed_height(context: Arc<IndexerContext>) -> mongodb::error::Result<i32> {
+pub async fn fetch_indexed_height(context: Arc<IndexerContext>) -> mongodb::error::Result<u64> {
     let status = fetch_indexer_status(context).await?;
 
     Ok(status.indexed_height)
@@ -59,10 +60,10 @@ pub async fn fetch_indexed_height(context: Arc<IndexerContext>) -> mongodb::erro
 
 pub async fn update_indexed_height(
     context: Arc<IndexerContext>,
-    indexed_height: i32,
+    indexed_height: u64,
 ) -> mongodb::error::Result<()> {
     context
-        .mongodb
+        .database
         .collection::<StatusDocument>(STATUS_COLLECTION)
         .update_one(
             doc! {
@@ -70,7 +71,7 @@ pub async fn update_indexed_height(
             },
             doc! {
                 "$set": {
-                    "indexedHeight": indexed_height,
+                    "indexedHeight": indexed_height as i64,
                     "updatedAt": mongodb::bson::DateTime::from(std::time::SystemTime::now()),
                 }
             },
