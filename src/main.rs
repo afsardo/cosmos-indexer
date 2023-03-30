@@ -1,8 +1,8 @@
-use cosmos_indexer::IndexerConfig;
-
 use dotenv;
 use env_logger;
 use log::debug;
+
+use cosmos_indexer::IndexerConfig;
 
 #[tokio::main]
 async fn main() {

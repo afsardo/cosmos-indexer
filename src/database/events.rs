@@ -4,29 +4,29 @@ use std::sync::Arc;
 
 use crate::IndexerContext;
 
-static EVENTS_COLLECTION: &str = "events";
+pub static EVENTS_COLLECTION: &str = "events";
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct EventsDocument {
-    _id: mongodb::bson::oid::ObjectId,
+    pub _id: mongodb::bson::oid::ObjectId,
     #[serde(rename = "chainId")]
-    chain_id: String,
+    pub chain_id: String,
     #[serde(rename = "blockHeight")]
-    block_height: u64,
+    pub block_height: u64,
     #[serde(rename = "txHash")]
-    tx_hash: String,
-    key: String,
-    logs: Vec<EventLog>,
+    pub tx_hash: String,
+    pub key: String,
+    pub logs: Vec<EventLog>,
     #[serde(rename = "fullLogs")]
-    full_logs: Vec<EventLog>,
+    pub full_logs: Vec<EventLog>,
     #[serde(rename = "createdAt")]
-    created_at: mongodb::bson::DateTime,
+    pub created_at: mongodb::bson::DateTime,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct EventLog {
-    key: String,
-    value: String,
+    pub key: String,
+    pub value: String,
 }
 
 pub async fn save_event(
