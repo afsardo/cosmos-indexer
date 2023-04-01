@@ -6,7 +6,7 @@ use crate::IndexerContext;
 
 pub static EVENTS_COLLECTION: &str = "events";
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct EventsDocument {
     pub _id: mongodb::bson::oid::ObjectId,
     #[serde(rename = "chainId")]
@@ -23,7 +23,7 @@ pub struct EventsDocument {
     pub created_at: mongodb::bson::DateTime,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct EventLog {
     pub key: String,
     pub value: String,
