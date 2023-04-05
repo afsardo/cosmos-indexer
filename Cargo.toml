@@ -1,16 +1,24 @@
 [package]
 name = "cosmos-indexer"
+description = "A Cosmos indexer to index events from blocks"
+keywords = ["cosmos", "indexer", "blockchain", "transactions", "indexing"]
+categories = ["cli-runner"]
+homepage = "https://github.com/afsardo/cosmos-indexer"
+documentation = "https://github.com/afsardo/cosmos-indexer"
+repository = "https://github.com/afsardo/cosmos-indexer"
+license = "GPL-3.0"
+license-file = "LICENSE.txt"
+readme = "README.md"
 version = "0.1.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+authors = ["André Sardo <andre@delphilabs.io>"]
 
 [dependencies]
 anyhow = "1.0.70"
 async-nats = "0.29.0"
-aws-config = "0.54.1"
-aws-sdk-sns = "0.24.0"
-aws-sdk-sqs = "0.24.0"
+aws-config = "0.55.0"
+aws-sdk-sns = "0.25.0"
+aws-sdk-sqs = "0.25.0"
 base64 = "0.21.0"
 bytes = "1.4.0"
 dotenv = "0.15.0"
